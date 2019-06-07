@@ -11,14 +11,12 @@ public class TetrisGame extends JPanel {
 
         JFrame f = new JFrame("TetrisGame");
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setSize(12*26+10, 26*23+25);
+        f.setSize(20*26+10, 26*24+10);
         f.setVisible(true);
 
         final TetrisGame game = new TetrisGame();
         game.init();
         f.add(game);
-
-
 
         f.addKeyListener(new KeyListener() {
             @Override
@@ -56,7 +54,7 @@ public class TetrisGame extends JPanel {
             public void run(){
                 while(true){
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(game.mil);
                         game.drop();
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -121,8 +119,12 @@ public class TetrisGame extends JPanel {
 
     private final Color[] myColor = {Color.cyan, Color.magenta, Color.orange, Color.yellow, Color.blue, Color.green, Color.gray, Color.black, Color.pink, Color.red};
 
+    private int totalRows;
+    private int level = 1;
+    private int mil = 1000;
     private Point pt;
     private int currentPiece;
+    private int followingPiece;
     private int rotation;
     private ArrayList<Integer> nextPiece = new ArrayList<Integer>();
     private long score;
@@ -140,6 +142,7 @@ public class TetrisGame extends JPanel {
             }
         }
         newPiece();
+        nextPiece();
     }
 
     public void newPiece(){
@@ -154,9 +157,14 @@ public class TetrisGame extends JPanel {
 //            gameOverCheck();
 
         }
-        currentPiece = nextPiece.get(0);
+        followingPiece = nextPiece.get(0);
+//        currentPiece = nextPiece.get(0);
         nextPiece.remove(0);
+    }
 
+    public void nextPiece(){
+        currentPiece = followingPiece;
+        newPiece();
     }
 
     private boolean collidesAt(int x, int y, int rotation){
@@ -200,7 +208,9 @@ public class TetrisGame extends JPanel {
             well[pt.x + p.x][pt.y + p.y] = myColor[currentPiece];
         }
         clearRows();
-        newPiece();
+        nextPiece();
+
+//        newPiece();
     }
 
     public void deleteRow(int row) {
@@ -226,6 +236,15 @@ public class TetrisGame extends JPanel {
                 deleteRow(j);
                 j += 1;
                 numClear += 1;
+                totalRows += 1;
+                if (totalRows == 5) {
+                    totalRows = 0;
+                    level += 1;
+                    mil -= 50;
+                    if (mil < 100){
+                        mil = 100;
+                    }
+                }
             }
         }
         switch (numClear){
@@ -249,6 +268,23 @@ public class TetrisGame extends JPanel {
         for(Point p: myPoint[currentPiece][rotation]){
             g.fillRect((pt.x+p.x)*26, (pt.y+p.y)*26, 25,25);
         }
+        g.setColor(Color.white);
+        g.fillRect(312, 0, 8*26, 26*24);
+
+        g.setColor(myColor[followingPiece]);
+        for(Point p: myPoint[followingPiece][0]){
+            g.fillRect((p.x)*26+350, (p.y)*26+215,25, 25);
+        }
+        g.setColor(Color.black);
+        Font scoreFont = new Font("Arial", Font.BOLD, 20);
+        Font titleFont = new Font("Arial", Font.BOLD, 40);
+        g.setFont(titleFont);
+        g.drawString("TETRIS",32*11-7, 40);
+        g.setFont(scoreFont);
+        g.drawString("Level : " + level, 30*11+3, 100);
+        g.drawString("Score is : " + score, 30*11+3, 140);
+        g.drawString("Next piece is:", 30*11+3, 190);
+
     }
 
     public void paintComponent(Graphics g){
@@ -259,10 +295,6 @@ public class TetrisGame extends JPanel {
                 g.fillRect(26*i, 26*j, 25,25);
             }
         }
-        g.setColor(Color.WHITE);
-        g.fillRect(19*11, 12, 100,18);
-        g.setColor(Color.black);
-        g.drawString("Score is : " + score, 19*11+3, 25);
 
         drawPiece(g);
                 if (collidesAt(pt.x, pt.y, rotation)) {
